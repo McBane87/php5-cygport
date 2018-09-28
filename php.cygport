@@ -1,0 +1,578 @@
+inherit httpd
+
+NAME="php"
+VERSION=5.6.38
+RELEASE=1
+CATEGORY="PHP"
+SUMMARY="PHP Hypertext Preprocessor"
+DESCRIPTION="PHP (recursive acronym for 'PHP: Hypertext Preprocessor')
+is a widely-used Open Source general-purpose scripting language that is
+especially suited for Web development and can be embedded into HTML."
+HOMEPAGE="http://www.php.net/"
+#SRC_URI="http://www.php.net/distributions/php-${VERSION}.tar.bz2"
+md5sum=e227111423df1719b910cf31e2bbe38b
+#SRC_URI="http://pkgs.fedoraproject.org/repo/pkgs/php/php-${VERSION}-strip.tar.xz/${md5sum}/php-${VERSION}-strip.tar.xz"
+SRC_URI="https://fossies.org/linux/www/php-${VERSION}.tar.xz"
+SRC_URI+=" template-builtin.reg template-ext.reg php-fpm.init"
+PATCH_URI="
+	php-5.6.3-includedir.patch
+	php-5.3.0-recode.patch
+	php-5.6.17-libdb.patch
+	php-5.4.7-odbctimer.patch
+	php-5.6.13-systzdata-v12.patch
+	php-5.6.3-ldap_r.patch
+	php-5.4.0-phpize.patch
+	php-5.6.3-fixheader.patch
+	php-5.6.3-phpinfo.patch
+	php-5.6.3-datetests.patch
+	5.3.4-cygwin-build.patch
+	5.3.8-curl-ssl.patch
+	5.3.4-dba-gdbm_compat.patch
+	5.4.10-imap-cygwin.patch
+	5.3.4-intl-libstdc.patch
+	5.3.4-pspell-libpspell.patch
+	5.3.10-sybase-cygwin.patch
+	5.3.6-gcc-visibility.patch
+	5.4.19-posix-ttyname_r.patch
+	5.4.20-configure-implicit-decls.patch
+	5.4.20-libmbfl-implicit-decls.patch
+	5.6.6-fix-libtoolize.patch
+	5.6.9-apache2handler-zts.patch
+	php-5.6.27-icu61.patch
+	php-5.6.27-zend-misc-setjmp.patch
+	php-5.6.27-regex-onig.patch
+	php-5.6.38-cygwin-oci.patch
+"
+
+DIFF_EXCLUDES="aclocal.m4 configure generated_lists libtool.m4 lt*.m4 ltmain.sh php_config.h.in php_version.h tests"
+
+# EXTENSIONS:
+#
+# The following modules are deps for others, and hence MUST be builtin:
+# date: intl
+# dom: xmlreader xsl
+# filter: (mandatory built-in)
+# hash: phar, session
+# intl: sqlite3 and pdo_sqlite (optional and only with bundled libsqlite3)
+# libxml: simplexml, soap, xsl
+# mysqlnd: mysql, mysqli, pdo_mysql (if configured to use mysqlnd)
+# openssl: phar
+# pcre: fileinfo
+# pdo: pdo_*
+# readline: phpdbg
+# session: memcache (PECL)
+# xml: xmlrpc
+
+# location of php.ini files
+inidir=/opt/php5/etc/php${VERSION%%.*}
+
+HTTPD_SYSCONFDIR=/opt/php5/$(sed 's#^/\+##g' <<< ${HTTPD_SYSCONFDIR})
+HTTPD_SYSCONFMODULESDIR=/opt/php5/$(sed 's#^/\+##g' <<< ${HTTPD_SYSCONFMODULESDIR})
+HTTPD_LIBEXECDIR=/opt/php5/$(sed 's#^/\+##g' <<< ${HTTPD_LIBEXECDIR})
+HTTPD_INCLUDEDIR=/opt/php5/$(sed 's#^/\+##g' <<< ${HTTPD_INCLUDEDIR})
+
+# required for all configure runs
+common_args="
+  --prefix=/opt/php5
+  --exec-prefix=/opt/php5
+  --cache-file=../config.cache
+  --sysconfdir=${inidir}
+  --libdir=/opt/php5/usr/lib/php
+  --datadir=/opt/php5/usr/share/php
+  --bindir=/opt/php5/usr/bin
+  --sbindir=/opt/php5/usr/sbin
+  --docdir=/opt/php5/usr/share/doc
+
+  --disable-static
+  --disable-rpath
+  --with-config-file-path=${inidir}
+  --with-config-file-scan-dir=${inidir}/conf.d
+  --with-layout=GNU
+  --with-regex=system
+  --with-system-tzdata
+
+  --enable-dom=yes
+  --enable-filter=yes
+  --enable-hash=yes
+  --with-mhash
+  --enable-libxml=yes
+  --with-openssl=yes
+  --with-system-ciphers
+  --enable-pdo=yes
+  --with-readline=no
+  --with-libedit=yes
+  --enable-session=yes
+  --enable-xml=yes
+  --with-libxml-dir=/usr
+  --with-openssl-dir=/usr
+  --with-pcre-dir=/usr
+  --with-pcre-regex=/usr
+
+  ac_cv_func_ttyname_r_works=yes
+"
+
+cli_args="
+  --without-pear
+
+  --enable-bcmath=shared
+  --with-bz2=shared,/usr
+  --enable-calendar=shared
+  --enable-ctype=shared
+  --with-curl=shared,/usr
+  --enable-dba=shared
+  --with-gdbm=/usr
+  --with-ndbm=/usr
+  --with-db4=/usr
+  --with-dbm=/usr
+  --with-cdb
+  --enable-inifile
+  --enable-flatfile
+  --with-enchant=shared,/usr
+  --enable-exif=shared
+  --enable-fileinfo=shared
+  --enable-ftp=shared
+  --with-gd=shared,/usr
+  --with-vpx-dir=/usr
+  --with-jpeg-dir=/usr
+  --with-png-dir=/usr
+  --with-zlib-dir=/usr
+  --with-xpm-dir=/usr
+  --with-freetype-dir=/usr
+  --with-t1lib=/usr
+  --enable-gd-native-ttf
+  --with-gettext=shared
+  --with-gmp=shared,/usr
+  --with-iconv=shared,/usr
+  --with-imap=shared,/usr
+  --with-kerberos=no
+  --with-imap-ssl=yes
+  --with-interbase=no
+  --with-ldap=shared,/usr
+  --with-ldap-sasl=/usr
+  --enable-intl=shared
+  --with-icu-dir=/usr
+  --enable-mbstring=shared
+  --with-onig=/usr
+  --enable-mbregex=yes
+  --enable-mbregex_backtrack=yes
+  --with-mcrypt=shared,/usr
+  --with-mssql=shared,/usr
+  --with-mysql=shared,mysqlnd
+  --with-mysql-sock=/var/run/mysql.sock
+  --with-mysqli=shared,mysqlnd
+  --enable-embedded_mysqli=no
+  --with-oci8=no
+  --with-adabas=no
+  --with-sapdb=no
+  --with-solid=no
+  --with-ibm-db2=no
+  --with-ODBCRouter=no
+  --with-empress=no
+  --with-empress-bcs=no
+  --with-birdstep=no
+  --with-custom-odbc=no
+  --with-iodbc=shared,/usr
+  --with-esoob=no
+  --with-unixODBC=no
+  --with-dbmaker=no
+  --enable-opcache=shared
+  --enable-pcntl=no
+  --with-pdo-dblib=shared,/usr
+  --with-pdo-firebird=no
+  --with-pdo-mysql=shared,mysqlnd
+  --with-pdo-oci=no
+  --with-pdo-odbc=shared,iodbc,/usr
+  --with-pdo-pgsql=shared,/usr
+  --with-pdo-sqlite=shared,/usr
+  --with-pgsql=shared,/usr
+  --enable-phar=shared
+  --enable-posix=shared
+  --with-pspell=shared,/usr
+  --with-recode=shared,/usr
+  --with-mm=no
+  --enable-shmop=shared
+  --enable-simplexml=shared
+  --with-snmp=shared,/usr
+  --enable-soap=shared
+  --with-sqlite3=shared,/usr
+  --with-sybase-ct=shared,/usr
+  --enable-sockets=shared
+  --enable-sysvmsg=shared
+  --enable-sysvsem=shared
+  --enable-sysvshm=shared
+  --with-tidy=shared,/usr
+  --enable-tokenizer=shared
+  --enable-wddx=shared
+  --enable-xmlreader=shared
+  --with-xmlrpc=shared
+  --with-iconv-dir=/usr
+  --enable-xmlwriter=shared
+  --with-xsl=shared,/usr
+  --enable-zip=shared
+  --with-libzip=/usr
+  --with-zlib=shared
+"
+
+# packaging
+#
+PKG_NAMES="${NAME}${VERSION%%.*} ${NAME}${VERSION%%.*}-devel httpd-mod_php${VERSION%%.*}"
+php5_CATEGORY="Interpreters PHP"
+# previously shared extensions moved into core
+php5_OBSOLETES="php-readline php-session"
+php5_CONTENTS="--exclude=php-config* --exclude=phpize*
+              --exclude=${inidir#/}/conf.d/*.ini
+              opt/php5/etc/defaults/ ${inidir#/}/conf.d/ opt/php5/etc/p*/php*
+              opt/php5/etc/rc.d/init.d/php-fpm
+              opt/php5/usr/bin/cygphp5-*.dll opt/php5/usr/bin/php*
+              opt/php5/usr/sbin/ opt/php5/usr/share/doc/ opt/php5/usr/share/man/
+              opt/php5/usr/share/pear/.registry/.channel.*/filter.reg
+              opt/php5/usr/share/pear/.registry/.channel.*/hash.reg
+              opt/php5/usr/share/pear/.registry/.channel.*/pdo.reg
+              opt/php5/usr/share/pear/.registry/.channel.*/readline.reg
+              opt/php5/usr/share/pear/.registry/.channel.*/session.reg
+              opt/php5/usr/share/pear/doc/filter/CREDITS
+              opt/php5/usr/share/pear/doc/hash/CREDITS
+              opt/php5/usr/share/pear/doc/pdo/CREDITS
+              opt/php5/usr/share/pear/doc/readline/CREDITS
+              opt/php5/usr/share/pear/doc/session/CREDITS
+              opt/php5/usr/share/php/
+              opt/php5/var/lib/rebase/dynpath.d/php
+"
+php5_devel_CATEGORY=${php_CATEGORY}
+php5_devel_REQUIRES="autoconf gcc-core make"
+php5_devel_CONTENTS="opt/php5/usr/bin/php-config opt/php5/usr/bin/phpize opt/php5/usr/include/
+	opt/php5/usr/lib/lib* opt/php5/usr/lib/php/build/
+	opt/php5/usr/share/man/man1/php-config.* opt/php5/usr/share/man/man1/phpize.*"
+#httpd_mod_php5_OBSOLETES="apache2-mod_php5"
+httpd_mod_php5_CONTENTS="${HTTPD_SYSCONFMODULESDIR#/} ${HTTPD_LIBEXECDIR#/}"
+httpd_mod_php5_SUMMARY="Embedded PHP for Apache HTTP Server"
+
+# This method provides 50+ modules, so better automate this:
+[ $(ls --color=never ${D}/opt/php5/usr/lib/php/*/oci8.dll >/dev/null 2>&1)$? -eq 0 ] && oci8_arg='--with-oci8=shared,DUMMY'
+[ $(ls --color=never ${D}/opt/php5/usr/lib/php/*/pdo_oci.dll >/dev/null 2>&1)$? -eq 0 ] && pdo_oci_arg='--with-pdo-oci=shared,DUMMY'
+for ext in $(echo ${cli_args}' '${oci8_arg}' '${pdo_oci_arg} | sed -e 's# #\n#g' | grep shared \
+             | sed -e 's#^--[a-z]*-##g' -e 's#=.*##g' -e 's#-#_#g' -e 's#[a-z]*odbc#odbc#')
+do
+	PKG_NAMES+=" php${VERSION%%.*}-${ext}"
+	declare php5_${ext}_CONTENTS="${inidir#/}/conf.d/${ext}.ini
+				     opt/php5/usr/lib/php/*/${ext}.dll
+				     opt/php5/usr/share/pear/doc/${ext}/
+				     opt/php5/usr/share/pear/.registry/.channel.*/${ext}.reg"
+	declare php5_${ext}_SUMMARY="PHP ${ext} extension"
+done
+php5_phar_CONTENTS+=" opt/php5/usr/bin/phar*"
+unset ext
+
+src_compile() {
+	cd ${S}
+	
+	#
+	# autotoolize
+	#
+	rm -f build/libtool.m4
+	libtoolize --copy --force || error "libtoolize failed"
+	cat /usr/share/aclocal/libtool.m4 /usr/share/aclocal/lt{options,sugar,version,~obsolete}.m4 > build/libtool.m4
+
+	cygmake -j1 -B -f build/build.mk ZENDDIR="Zend"
+	# these are shipped and used by phpize
+	gnuconfigize .
+
+	# Hack to work around configure adding to hard-coded include_path
+	# only when bundled PEAR is enabled (we package it separately)
+	export PEAR_INSTALLDIR=/opt/php5/usr/share/pear
+	
+	#
+	# build runtime and executable SAPIs (CLI, CGI, FPM)
+	#
+	mkdir -p ${B}/embed
+	cd ${B}/embed
+	CYGCONF_SOURCE="${S}" cygconf ${common_args} ${cli_args} \
+		--enable-cgi --enable-cli \
+		--enable-fpm --with-fpm-acl \
+		--enable-embed --enable-phpdbg
+
+	sed -e '/^LTCFLAGS=/d' -i libtool
+	sed -e 's/ -lphp5 / libphp5.la /g' -i Makefile
+
+	# first make the common sources library
+	cygmake libphp${VERSION%%.*}.la \
+		EXTRA_LDFLAGS="-release ${VERSION%.*} -avoid-version -module -no-undefined"
+
+	sed -e 's#link=yes#link=no#' -i libphp${VERSION%%.*}.la
+
+	# then make everything else
+	# c-client is static only so we need to circumvent libtool to link
+	cygmake \
+		IMAP_SHARED_LIBADD='-Wl,/usr/lib/c-client.a,-lssl,-lcrypto' \
+		PHP_GLOBAL_OBJS='' \
+		ZEND_EXTRA_LIBS="${B}/embed/libphp${VERSION%%.*}.la"
+
+
+	#
+	# Orcale EXTENSIONS
+	#
+	
+	if [ "${ORACLE_HOME}" != "" ] || [ "${ORACLE_INSTC}" != "" ]; then
+		if [ "${ORACLE_VERSION}" != "" ]; then
+			
+			# Workaround the make paths with spaces work
+			[ -L ${T}/ORACLE_HOME ] && rm -f ${T}/ORACLE_HOME
+			[ -L ${T}/ORACLE_INSTC ] && rm -f ${T}/ORACLE_INSTC
+			[ "${ORACLE_HOME}" != "" ] && ln -s "${ORACLE_HOME}" ${T}/ORACLE_HOME
+			[ "${ORACLE_INSTC}" != "" ] && ln -s "${ORACLE_INSTC}" ${T}/ORACLE_INSTC
+			
+			# Workaround to make the linker find the libraries.
+			# They need to be named libxyz.dll
+			[ -L ${T}/ORACLE_INSTC/liboci.dll ] && rm -f  ${T}/ORACLE_INSTC/liboci.dll
+			[ -f ${T}/ORACLE_INSTC/oci.dll ] && ln -s oci.dll ${T}/ORACLE_INSTC/liboci.dll
+			[ -L ${T}/ORACLE_HOME/lib/liboci.dll ] && rm -f  ${T}/ORACLE_HOME/lib/liboci.dll
+			[ -f ${T}/ORACLE_HOME/lib/oci.dll ] && ln -s oci.dll ${T}/ORACLE_HOME/lib/liboci.dll
+			
+			
+			ORACLE_PATH="${T}/ORACLE_INSTC"; [ "${ORACLE_HOME}" != "" ] && ORACLE_PATH="${T}/ORACLE_HOME"
+			ORACLE_CFG="instantclient,${ORACLE_PATH}"; [ "${ORACLE_HOME}" != "" ] && ORACLE_CFG="${ORACLE_PATH}"
+			
+			#
+			# OCI can't be build together with other extensions, 
+			# because php fails if LDAP and OCI are enabled together.
+			#
+			mkdir -p ${B}/oci
+			cd ${B}/oci
+			CYGCONF_SOURCE="${S}" cygconf ${common_args} \
+				--disable-all \
+				--with-oci8=shared,"${ORACLE_CFG}" \
+				--with-pdo-oci=shared,"${ORACLE_CFG},${ORACLE_VERSION}"
+
+			sed -e '/^LTCFLAGS=/d' -i libtool
+			sed -e 's/ -lphp5 / libphp5.la /g' -i Makefile
+
+			# first make the common sources library
+			cygmake libphp${VERSION%%.*}.la \
+				EXTRA_LDFLAGS="-release ${VERSION%.*} -avoid-version -module -no-undefined"
+
+			sed -e 's#link=yes#link=no#' -i libphp${VERSION%%.*}.la
+			
+			# then make everything else
+			cygmake \
+				PHP_GLOBAL_OBJS='' \
+				ZEND_EXTRA_LIBS="${B}/oci/libphp${VERSION%%.*}.la"
+		fi
+	fi
+	
+	#
+	# Apache2 mod_php5 SAPI
+	#
+	mkdir -p ${B}/apache2
+	cd ${B}/apache2
+
+	CYGCONF_SOURCE="${S}" cygconf ${common_args} \
+		--disable-all --disable-cli --with-apxs2=${HTTPD_APXS} ${common_args}
+
+	# the -a flag adds the module to httpd.conf
+	sed -e 's#-prefer-non-pic -static##g' \
+		-e 's#-prefer-pic##g' \
+		-e 's#-i -a -n#-i -n#g' \
+		-i Makefile
+
+	# HTTPD expects mods to have .so suffix on all platforms
+	cygmake libphp${VERSION%%.*}.la \
+		PHP_GLOBAL_OBJS='' \
+		ZEND_EXTRA_LIBS="${B}/embed/libphp${VERSION%%.*}.la"
+		
+}
+
+src_test() {
+	export PATH="${B}/embed/.libs:$PATH"
+
+	cd ${B}/embed
+	cygmake -j1 test
+}
+
+src_install() {
+	local n sapi x xdir
+	echo "DIR is $PWD"
+
+	# install the Apache SAPI
+	cd ${B}/apache2
+	cygmake -j1 install-sapi INSTALL_ROOT=${D} PHP_GLOBAL_OBJS=''
+	
+	# install OCI-Extension
+	if [ -d "${B}/oci" ]; then
+		cd ${B}/oci
+		cygmake -j1 install INSTALL_ROOT=${D} INSTALL_IT=
+	fi
+
+	# install the other SAPIs, build environment, and everything else
+	cd ${B}/embed
+	cygmake -j1 install INSTALL_ROOT=${D} INSTALL_IT=
+	# install the shared lib (normally done by INSTALL_IT)
+	dobin libs/cygphp5-*.dll
+	dolib libs/libphp5.dll.a
+
+	# install the real executables, not the libtool stubs
+	cd ${B}
+	dobin embed/sapi/c*/*.exe
+	dosbin embed/sapi/fpm/php-fpm.exe
+
+	# sanitize php-config
+	sed -e "s#^libs=.*#libs=\"-lphp${VERSION%%.*}\"#" \
+		-e 's#^php_sapis=.*#php_sapis="cli cgi embed fpm apache2handler"#' \
+		-i ${D}/opt/php5/usr/bin/php-config
+
+	# provide default php.ini
+	insinto ${inidir}
+	newins ${S}/php.ini-production php.ini
+	make_etc_defaults ${inidir}/php.ini
+
+	mv ${D}${inidir}/php-fpm.conf{.default,}
+	make_etc_defaults ${inidir}/php-fpm.conf
+
+	exeinto /opt/php5/etc/rc.d/init.d
+	newexe ${S}/php-fpm.init php-fpm
+
+	# add .ini files for each extension, so that it's loaded once installed
+	local date=$(date +%F)
+	local time=$(date +%T)
+	local timestamp=$(date +%s)
+	local regdir=/opt/php5/usr/share/pear/.registry/.channel.pecl.php.net
+	local xdir=$(${D}/opt/php5/usr/bin/php-config --extension-dir)
+	local dll ext docdir path_len summary_len p
+
+	keepdir ${inidir}/conf.d
+	dodir ${regdir}
+
+	for x in ${D}${xdir}/*.dll
+	do
+		dll=${x##*/}
+		ext=${dll%.dll}
+		docdir=/opt/php5/usr/share/pear/doc/${ext}
+		doc_len=$((${#docdir} + 8))	# /CREDITS
+		path_len=$((${#xdir} + ${#dll} + 1))
+		summary_len=$((${#ext} + 14))	# PHP ___ extension
+
+		# create .ini file for automatic extension loading
+		if $(${OBJDUMP} -p ${x} | grep -q zend_startup_module)
+		then
+			echo "zend_extension = ${xdir}/${dll}" >> ${D}${inidir}/conf.d/${ext}.ini
+		else
+			echo "extension = ${dll}" >> ${D}${inidir}/conf.d/${ext}.ini
+		fi
+
+		# register extension with pecl to prevent accidental
+		# installation of obsolete versions
+		insinto ${docdir}
+		touch ${S}/ext/${ext}/CREDITS
+		doins ${S}/ext/${ext}/CREDITS
+
+		sed -e "s,@DATE@,${date},g;
+			s,@DOCDIR@,${docdir},g;
+			s,@DOC_LEN@,${doc_len},g;
+			s,@DLL@,${dll},g;
+			s,@DLL_LEN@,${#dll},g;
+			s,@EXT@,${ext},g;
+			s,@EXT_LEN@,${#ext},g;
+			s,@PATH@,${xdir}/${dll},g;
+			s,@PATH_LEN@,${path_len},g;
+			s,@SUMMARY_LEN@,${summary_len},g;
+			s,@TIME@,${time},g;
+			s,@VERSION@,${VERSION},g;
+			s,@VERSION_LEN@,${#VERSION},g;
+			s,@TIMESTAMP@,${timestamp}," \
+			${S}/template-ext.reg > ${D}${regdir}/${ext}.reg
+	done
+
+	# builtin extensions
+	# when adding, be sure to update php_CONTENTS
+	for ext in filter hash pdo readline session
+	do
+		docdir=/opt/php5/usr/share/pear/doc/${ext}
+		doc_len=$((${#docdir} + 8))	# /CREDITS
+		summary_len=$((${#ext} + 22))	# PHP ___ builtin extension
+
+		# register extension with pecl to prevent accidental
+		# installation of obsolete versions
+		insinto ${docdir}
+		doins ${S}/ext/${ext}/CREDITS
+
+		sed -e "s,@DATE@,${date},g;
+			s,@DOCDIR@,${docdir},g;
+			s,@DOC_LEN@,${doc_len},g;
+			s,@EXT@,${ext},g;
+			s,@EXT_LEN@,${#ext},g;
+			s,@SUMMARY_LEN@,${summary_len},g;
+			s,@TIME@,${time},g;
+			s,@VERSION@,${VERSION},g;
+			s,@VERSION_LEN@,${#VERSION},g;
+			s,@TIMESTAMP@,${timestamp}," \
+			${S}/template-builtin.reg > ${D}${regdir}/${ext}.reg
+	done
+
+	dodir ${HTTPD_SYSCONFMODULESDIR}
+	cat > ${D}${HTTPD_SYSCONFMODULESDIR}/mod_php5.conf <<_EOF
+# mod_php5 is not thread-safe
+<IfModule prefork.c>
+  LoadModule php5_module modules/libphp5.so
+</IfModule>
+_EOF
+
+	# Add httpd.conf snippet
+	dodir ${HTTPD_SYSCONFDIR}
+	cat > ${D}${HTTPD_SYSCONFDIR}/php5.conf <<_EOF
+AddType text/html .php
+DirectoryIndex index.php
+
+<IfModule mod_php5.c>
+    <FilesMatch \.php$>
+        SetHandler application/x-httpd-php
+    </FilesMatch>
+    <FilesMatch \.phps$>
+        SetHandler application/x-httpd-php-source
+    </FilesMatch>
+</IfModule>
+
+# if using a thread-safe MPM, or mod_php5 is not installed, use php-fpm instead
+# requires: mod_proxy, mod_proxy_fcgi
+<IfModule !mod_php5.c>
+    <FilesMatch \.php$>
+        # value depends on /opt/php5/etc/php5/php-fpm.conf:listen=; this is the default
+        SetHandler "proxy:fcgi://localhost:9000"
+    </FilesMatch>
+</IfModule>
+_EOF
+	make_etc_defaults ${HTTPD_SYSCONFDIR}/php5.conf
+
+	dodir /opt/php5/var/lib/rebase/dynpath.d
+	echo $(${D}/opt/php5/usr/bin/php-config --extension-dir) > ${D}/opt/php5/var/lib/rebase/dynpath.d/php
+	src_my_postinst
+}
+
+KEEP_LA_FILES="none"
+
+RESTRICT="debuginfo diff postinst-doc postinst-gconf postinst-info upload"
+KEEPDIRS="/opt/php5/usr/share/doc"
+src_my_postinst() {
+	if [ "${D}" != '/' ] && [ "${D}" != '' ]; then
+		if [ -d ${D}/usr ]; then
+			cp -avr ${D}/usr/* ${D}/opt/php5/usr/
+			echo "rm -rf ${D}/usr" && rm -rf ${D}/usr
+		fi
+		if [ -d ${D}/etc ]; then
+			cp -avr ${D}/etc/* ${D}/opt/php5/etc/
+			echo "rm -rf ${D}/etc" && rm -rf ${D}/etc
+		fi
+
+		[ ! -d ${D}/opt/php5/usr/share ] && echo "mkdir ${D}/opt/php5/usr/share" && mkdir ${D}/opt/php5/usr/share
+		[ ! -d ${D}/opt/php5/usr/share/doc ] && echo "mkdir ${D}/opt/php5/usr/share/doc" && mkdir ${D}/opt/php5/usr/share/doc
+		[ ! -d ${D}/opt/php5/usr/include ] && echo "mkdir ${D}/opt/php5/usr/include" && mkdir ${D}/opt/php5/usr/include
+
+		if [ -d ${D}/opt/php5/share ]; then
+			cp -avr ${D}/opt/php5/share/* ${D}/opt/php5/usr/share/
+			echo "rm -rf ${D}/opt/php5/share" && rm -rf ${D}/opt/php5/share
+		fi
+		if [ -d ${D}/opt/php5/include ]; then
+			cp -avr ${D}/opt/php5/include/* ${D}/opt/php5/usr/include/
+			echo "rm -rf ${D}/opt/php5/include" && rm -rf ${D}/opt/php5/include
+		fi
+		[ -f ${D}/../../php-fpm.init ] && echo "cat ${D}/../../php-fpm.init > ${D}/opt/php5/etc/rc.d/init.d/php-fpm" && cat ${D}/../../php-fpm.init > ${D}/opt/php5/etc/rc.d/init.d/php-fpm
+	fi
+}

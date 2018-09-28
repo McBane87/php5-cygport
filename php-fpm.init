@@ -1,0 +1,134 @@
+#! /bin/bash
+#
+# php-fpm   Start/Stop the PHP FastCGI Process Manager
+#
+# chkconfig: 2345 90 60
+# description: php-fpm is the PHP FastCGI Process Manager
+# processname: php-fpm
+# config: /etc/php5/php-fpm.conf
+# pidfile: /var/run/php-fpm.pid
+
+PATH=/sbin:/usr/sbin:/usr/bin
+PREFIX=/opt/php5/usr
+CONFIG=/etc/php5/php-fpm.conf
+PIDFILE=/var/run/php5-fpm.pid
+LOGFILE=/var/log/php5-fpm.log
+
+# Source function library.
+if [ -f /etc/init.d/functions ] ; then
+  . /etc/init.d/functions
+fi
+
+RETVAL=0
+
+# See how we were called.
+
+prog="php-fpm"
+prog_dsp="php5-fpm"
+progdir="/opt/php5/usr/sbin"
+DAEMON="$progdir/$prog.exe"
+
+test -f $DAEMON || exit 0
+
+# Source configuration
+if [ -f /etc/sysconfig/$prog ] ; then
+    . /etc/sysconfig/$prog
+fi
+
+start() {
+        echo -n $"Starting $prog_dsp: "
+	# check if cygrunsrv process
+        cygrunsrv --start $prog
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && touch $PIDFILE  && echo "done."
+        return $RETVAL
+}
+
+stop() {
+        echo -n $"Stopping $prog_dsp: "
+	cygrunsrv --stop $prog
+        if test -r $PIDFILE; then
+            kill `cat $PIDFILE` 2> /dev/null || echo -n " failed"
+        else
+            echo -n " no PID file"
+        fi
+	# this really needs a long time to stop.
+        RETVAL=$?
+        echo "."
+        [ $RETVAL -eq 0 ] && rm -f $PIDFILE && echo "done."
+        return $RETVAL
+}
+
+rhstatus() {
+        # service status
+        cygrunsrv -Q $prog_dsp
+}
+
+restart() {
+        echo -n $"Restarting $prog_dsp: "
+        $0 stop
+        sleep 1
+        $0 start
+        echo "done."
+}
+
+install() {
+        echo -n $"Installing $prog_dsp daemon: "
+	# some safety measures
+	touch $LOGFILE $PIDFILE
+	chgrp 18 $LOGFILE $PIDFILE
+	chmod g+w $LOGFILE $PIDFILE
+	#it was compiled with uid=18
+	cygrunsrv --install $prog_dsp --path $DAEMON -a "--nodaemonize" -e CYGWIN="$CYGWIN" --disp "CYGWIN PHP5 FastCGI Process Manager"
+        echo "done."
+}
+uninstall() {
+        echo -n $"Uninstalling $prog_dsp daemon: "
+	stop
+	cygrunsrv --remove $prog_dsp
+        echo "done."
+}
+reload() {
+        echo -n $"Reloading $prog_dsp daemon configuration: "
+	echo "unsupported. $0 restart"
+	return 1
+
+	/usr/bin/kill -HUP `cat $PIDFILE`
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && echo "done."
+        RETVAL=$?
+        return $RETVAL
+}
+
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  restart)
+        restart
+        ;;
+  reload)
+        reload
+        ;;
+  install)
+        install
+        ;;
+  uninstall)
+        uninstall
+        ;;
+  status)
+        rhstatus
+        ;;
+  condrestart)
+        [ -f $PIDFILE ] && restart || :
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|status|install|uninstall|restart|condrestart}"
+        exit 1
+esac
+
+exit $?

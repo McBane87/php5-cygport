@@ -1,0 +1,31 @@
+--- php/Zend/zend.h	2016-10-13 02:15:09.000000000 +0200
++++ php/Zend/zend.h	2018-09-26 14:16:30.980302500 +0200
+@@ -79,6 +79,28 @@
+ # include <dlfcn.h>
+ #endif
+ 
++#ifdef __GNUC__
++#  if __GNUC_PREREQ(4,7)
++        typedef unsigned short  ushort;
++        typedef unsigned int    uint;
++        typedef unsigned long   ulong;
++#  endif
++#endif
++
++#ifdef __CYGWIN__
++#   ifdef __x86_64__
++        typedef long jmp_buf[32];
++        typedef long sigjmp_buf[32+1+((sizeof (long) + sizeof (sigset_t) - 1)
++                                     /sizeof (long))];
++#   endif
++
++#   ifdef __i386__
++        typedef int jmp_buf[52];
++        typedef int sigjmp_buf[52+1+((sizeof (int) + sizeof (sigset_t) - 1)
++                                     /sizeof (int))];
++#   endif
++#endif
++
+ #if defined(HAVE_LIBDL) && !defined(ZEND_WIN32)
+ 
+ # ifndef RTLD_LAZY

@@ -1,0 +1,34 @@
+--- php/acinclude.m4	2018-09-25 12:32:49.839150700 +0200
++++ php/acinclude.m4	2018-09-25 12:33:49.815735300 +0200
+@@ -2262,6 +2262,9 @@
+     ICU_LIBS=`$ICU_CONFIG --ldflags --ldflags-icuio`
+     PHP_EVAL_INCLINE($ICU_INCS)
+     PHP_EVAL_LIBLINE($ICU_LIBS, $1)
++
++    ICU_EXTRA_FLAGS=`$ICU_CONFIG --cxxflags`
++    ICU_EXTRA_FLAGS="$ICU_EXTRA_FLAGS -DU_USING_ICU_NAMESPACE=1"
+   fi
+ ])
+ 
+--- php/ext/intl/config.m4	2018-09-25 12:34:27.383146600 +0200
++++ php/ext/intl/config.m4	2018-09-25 12:35:52.405084100 +0200
+@@ -86,7 +86,7 @@
+     breakiterator/codepointiterator_internal.cpp \
+     breakiterator/codepointiterator_methods.cpp \
+     idn/idn.c \
+-    $icu_spoof_src, $ext_shared,,$ICU_INCS -Wno-write-strings)
++    $icu_spoof_src, $ext_shared,,$ICU_INCS -Wno-write-strings $ICU_EXTRA_FLAGS)
+   PHP_ADD_BUILD_DIR($ext_builddir/collator)
+   PHP_ADD_BUILD_DIR($ext_builddir/converter)
+   PHP_ADD_BUILD_DIR($ext_builddir/common)
+--- php/ext/intl/config.w32	2018-09-25 12:34:39.353462300 +0200
++++ php/ext/intl/config.w32	2018-09-25 12:36:47.861226200 +0200
+@@ -118,7 +118,7 @@
+ 				"intl");
+ 		
+ 		ADD_FLAG("LIBS_INTL", "icudt.lib icuin.lib icuio.lib icule.lib iculx.lib");
+-		ADD_FLAG("CFLAGS_INTL", "/EHsc");
++		ADD_FLAG("CFLAGS_INTL", "/EHsc /D U_USING_ICU_NAMESPACE=1");
+ 		AC_DEFINE("HAVE_INTL", 1, "Internationalization support enabled");
+ 	} else {
+ 		WARNING("intl not enabled; libraries and/or headers not found");

@@ -1,0 +1,11 @@
+--- origsrc/php-5.3.4/ext/xmlrpc/config.m4	2009-04-27 12:49:32.000000000 -0500
++++ src/php-5.3.4/ext/xmlrpc/config.m4	2010-12-29 23:23:20.000000000 -0600
+@@ -116,7 +116,7 @@ dnl for xmlrpc-epi because of this.
+   fi
+ 
+   PHP_ADD_INCLUDE($XMLRPC_DIR)
+-  PHP_ADD_LIBRARY_WITH_PATH(xmlrpc, $XMLRPC_DIR/$PHP_LIBDIR, XMLRPC_SHARED_LIBADD)
++  PHP_ADD_LIBRARY_WITH_PATH(xmlrpc-epi, $XMLRPC_DIR/$PHP_LIBDIR, XMLRPC_SHARED_LIBADD)
+   PHP_NEW_EXTENSION(xmlrpc,xmlrpc-epi-php.c, $ext_shared)
+   XMLRPC_MODULE_TYPE=external
+ fi

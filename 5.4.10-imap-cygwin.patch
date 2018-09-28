@@ -1,0 +1,17 @@
+--- origsrc/php-5.4.10/ext/imap/php_imap.h	2012-12-19 00:55:19.000000000 -0600
++++ src/php-5.4.10/ext/imap/php_imap.h	2013-01-18 03:51:03.854211900 -0600
+@@ -65,6 +65,14 @@
+ #define IMAPVER "Imap 4"
+ #endif
+ 
++#ifdef __CYGWIN__
++extern DRIVER mhdriver;
++extern DRIVER mmdfdriver;
++extern DRIVER newsdriver;
++extern DRIVER tenexdriver;
++extern DRIVER mtxdriver;
++#endif
++
+ 
+ /* Determines how mm_list() and mm_lsub() are to return their results. */
+ typedef enum {

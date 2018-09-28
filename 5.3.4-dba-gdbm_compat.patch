@@ -1,0 +1,20 @@
+--- origsrc/php-5.3.4/ext/dba/config.m4	2010-12-01 13:20:16.000000000 -0600
++++ src/php-5.3.4/ext/dba/config.m4	2010-12-29 23:23:12.000000000 -0600
+@@ -175,7 +175,7 @@ if test "$PHP_NDBM" != "no"; then
+   done
+   
+   if test -n "$THIS_INCLUDE"; then
+-    for LIB in ndbm db1 c; do
++    for LIB in ndbm db1 gdbm_compat c; do
+       PHP_CHECK_LIBRARY($LIB, dbm_open, [
+         AC_DEFINE_UNQUOTED(NDBM_INCLUDE_FILE, "$THIS_INCLUDE", [ ])
+         AC_DEFINE(DBA_NDBM, 1, [ ]) 
+@@ -479,7 +479,7 @@ if test "$PHP_DBM" != "no"; then
+   done
+ 
+   if test -n "$THIS_INCLUDE"; then
+-    for LIB in dbm c gdbm; do
++    for LIB in dbm c gdbm gdbm_compat; do
+       PHP_CHECK_LIBRARY($LIB, dbminit, [
+         AC_MSG_CHECKING(for DBM using GDBM)
+         AC_DEFINE_UNQUOTED(DBM_INCLUDE_FILE, "$THIS_INCLUDE", [ ])
