@@ -281,6 +281,13 @@ src_compile() {
 	# only when bundled PEAR is enabled (we package it separately)
 	export PEAR_INSTALLDIR=/opt/php5/usr/share/pear
 	
+	# Building failed on i686 because of missing libintl.la.
+	# Let's tell the user
+	[ "$ARCH" == "i686" ] && [ ! -f /usr/lib/libintl.la ] && \
+		echo "Can't find /usr/lib/libintl.la." && \
+		echo "Please copy the one shipped with this GIT into the named path or building maybe fails." && \
+		exit 1
+	
 	#
 	# build runtime and executable SAPIs (CLI, CGI, FPM)
 	#
