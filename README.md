@@ -8,7 +8,7 @@ It gets installed into `/opt/php5`.
 ```
 ./getDependencies
 
-# If you have Oracle Instant Client.
+# If you have Oracle Instant Client (Windows Versions, with DLLs).
 # Version always needs to end with x.1, even if it is x.2
 export ORACLE_INSTC=/path/to/instantclient_12_2
 export ORACLE_VERSION=12.1
