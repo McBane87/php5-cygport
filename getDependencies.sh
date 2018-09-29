@@ -63,6 +63,7 @@ $AC install libicu-devel libicu62
 $AC install libintl-devel libintl8
 $AC install libiodbc-devel libiodbc2
 $AC install libmcrypt-devel libmcrypt
+$AC install libncurses-devel libncursesw10 libncurses++w10
 $AC install libonig-devel libonig5
 $AC install openldap-devel libopenldap2_4_2
 $AC install openssl-devel libopenssl100
