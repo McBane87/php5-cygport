@@ -339,7 +339,9 @@ src_compile() {
 			mkdir -p ${B}/oci
 			cd ${B}/oci
 			CYGCONF_SOURCE="${S}" cygconf ${common_args} \
-				--disable-all \
+				--disable-all --enable-embed \
+				--disable-cli --disable-cgi \
+				--disable-fpm \
 				--with-oci8=shared,"${ORACLE_CFG}" \
 				--with-pdo-oci=shared,"${ORACLE_CFG},${ORACLE_VERSION}"
 
@@ -355,7 +357,7 @@ src_compile() {
 			# then make everything else
 			cygmake \
 				PHP_GLOBAL_OBJS='' \
-				ZEND_EXTRA_LIBS="${B}/oci/libphp${VERSION%%.*}.la"
+				ZEND_EXTRA_LIBS="${B}/embed/libphp${VERSION%%.*}.la"
 		fi
 	fi
 	
@@ -366,7 +368,7 @@ src_compile() {
 	cd ${B}/apache2
 
 	CYGCONF_SOURCE="${S}" cygconf ${common_args} \
-		--disable-all --disable-cli --with-apxs2=${HTTPD_APXS} ${common_args}
+		--disable-all --disable-cli --disable-cgi --with-apxs2=${HTTPD_APXS} ${common_args}
 
 	# the -a flag adds the module to httpd.conf
 	sed -e 's#-prefer-non-pic -static##g' \
