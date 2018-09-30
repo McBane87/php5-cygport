@@ -82,6 +82,10 @@ common_args="
   --bindir=/opt/php5/usr/bin
   --sbindir=/opt/php5/usr/sbin
   --docdir=/opt/php5/usr/share/doc
+  --includedir=/opt/php5/usr/include
+  --oldincludedir=/opt/php5/usr/include
+  --datarootdir=/opt/php5/usr/share
+  --mandir=/opt/php5/usr/share/man
 
   --disable-static
   --disable-rpath
@@ -374,7 +378,7 @@ src_compile() {
 	mkdir -p ${B}/apache2
 	cd ${B}/apache2
 
-	CYGCONF_SOURCE="${S}" cygconf ${common_args} \
+	CYGCONF_SOURCE="${S}" cygconf \
 		--disable-all --disable-cli --disable-cgi --with-apxs2=${HTTPD_APXS} ${common_args}
 
 	# the -a flag adds the module to httpd.conf
@@ -415,14 +419,14 @@ src_install() {
 	cd ${B}/embed
 	cygmake -j1 install INSTALL_ROOT=${D} INSTALL_IT=
 	# install the shared lib (normally done by INSTALL_IT)
-	dobin libs/cygphp5-*.dll
-	dolib libs/libphp5.dll.a
+	_install 0755 libs/cygphp5-*.dll /opt/php5/usr/bin/
+	_install 0644 libs/libphp5.dll.a /opt/php5/usr/lib/
 
 	# install the real executables, not the libtool stubs
 	cd ${B}
-	dobin embed/sapi/c*/*.exe
-	dosbin embed/sapi/fpm/php-fpm.exe
-
+	while read _file_; do _install 0755 ${_file_} /opt/php5/usr/bin/; done <<< "$(find embed/sapi/c*/*.exe)"
+	_install 0755 embed/sapi/fpm/php-fpm.exe /opt/php5/usr/sbin/
+	
 	# sanitize php-config
 	sed -e "s#^libs=.*#libs=\"-lphp${VERSION%%.*}\"#" \
 		-e 's#^php_sapis=.*#php_sapis="cli cgi embed fpm apache2handler"#' \
@@ -552,13 +556,16 @@ _EOF
 
 	dodir /opt/php5/var/lib/rebase/dynpath.d
 	echo $(${D}/opt/php5/usr/bin/php-config --extension-dir) > ${D}/opt/php5/var/lib/rebase/dynpath.d/php
+	
+	keepdir /opt/php5/usr/share/doc
 	src_my_postinst
 }
 
 KEEP_LA_FILES="none"
+RESTRICT="upload postinst-doc postinst-gconf postinst-info"
 
-RESTRICT="debuginfo diff postinst-doc postinst-gconf postinst-info upload"
-KEEPDIRS="/opt/php5/usr/share/doc"
+# Runs after src_install() and before src_postinst, that's why
+# postinst-doc and postinst-gconf wouldn't be affected by this.
 src_my_postinst() {
 	if [ "${D}" != '/' ] && [ "${D}" != '' ]; then
 		if [ -d ${D}/usr ]; then
@@ -584,4 +591,33 @@ src_my_postinst() {
 		fi
 		[ -f ${D}/../../php-fpm.init ] && echo "cat ${D}/../../php-fpm.init > ${D}/opt/php5/etc/rc.d/init.d/php-fpm" && cat ${D}/../../php-fpm.init > ${D}/opt/php5/etc/rc.d/init.d/php-fpm
 	fi
+}
+
+_install() {
+	local mode=${1}
+	local file=${2}
+	local targetdir=${3}
+	local targetfile=${4:-${2##*/}}
+	local ltinst
+
+	if [ ! -e "${file}" ]
+	then
+		error "file ${file} does not exist"
+		return 2
+	fi
+
+	if [ ! -d ${D}${targetdir} ]
+	then
+		error "Directory ${targetdir} does not exist"
+		return 2
+	fi
+
+	ltinst=
+	case ${file} in
+		*.la)  ltinst="/usr/bin/libtool --mode=install" ;;
+		*)     [ -f "${file%/*}/.libs/${file##*/}" ] && ltinst="/usr/bin/libtool --mode=install" ;;
+	esac
+
+	verbose ${ltinst} /usr/bin/install -m${mode} "${file}" "${D}${targetdir}/${targetfile}"
+	return $?
 }
