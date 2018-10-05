@@ -73,8 +73,8 @@ HTTPD_INCLUDEDIR=/opt/php5/$(sed 's#^/\+##g' <<< ${HTTPD_INCLUDEDIR})
 
 # required for all configure runs
 common_args="
-  --prefix=/opt/php5
-  --exec-prefix=/opt/php5
+  --prefix=/opt/php5/usr
+  --exec-prefix=/opt/php5/usr
   --cache-file=../config.cache
   --sysconfdir=${inidir}
   --libdir=/opt/php5/usr/lib/php
